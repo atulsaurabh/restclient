@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+<restconfiguration>
+    <ipaddress>localhost</ipaddress>    
+    <port>8080</port>
+    <testingurl>welcometest</testingurl>
+    <mode>database</mode>
+    <repository>
+        <database>
+            <ipaddress>localhost</ipaddress>
+            <dbname>abblog2</dbname>
+            <port>3306</port>
+            <user>suyosys</user>
+            <password>password</password>
+        </database>
+    </repository>
+</restconfiguration>
