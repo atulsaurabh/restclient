@@ -1,19 +1,13 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package net.suyojan.system.restclient.configuration;
 
 import java.util.Properties;
 import javax.sql.DataSource;
-import net.suyojan.system.restclient.background.BackgroundTransmitionJob;
+import net.suyojan.system.restclient.condition.SecondaryDatabaseEnablingCondition;
 import net.suyojan.system.restclient.service.XMLReadWriteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -21,49 +15,41 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-/**
- *
- * @author Suyojan
- */
-
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        entityManagerFactoryRef = "entityManagerFactory",
-        transactionManagerRef =  "transactionManager",
-        basePackages = "net.suyojan.system.restclient.repository"
+        entityManagerFactoryRef = "secondaryEntityManagerFactory",
+        transactionManagerRef = "secondaryTransactionManager",
+        basePackages = "net.suyojan.system.restclient.repository.secondaryrepository"
 )
-public class DatabaseConfiguration 
-{
-    @Autowired
+@Conditional(SecondaryDatabaseEnablingCondition.class)
+public class SecondaryDatabaseConfiguration {
+   @Autowired
     private XMLReadWriteService xMLReadWriteService;
   
     
-    @Bean
-    @Primary
-    public DataSource dataSource()
+    @Bean(name = "secobdaryDataSource")
+    public DataSource secondaryDataSource()
     {
         RestConfiguration configuration=xMLReadWriteService.readRestConfiguration();
-        System.out.println(configuration.getRepository().getDatabase().getDbname());
         DriverManagerDataSource driverManagerDataSource=new DriverManagerDataSource();
         driverManagerDataSource.setDriverClassName("com.mysql.jdbc.Driver");
-        String url = "jdbc:mysql://"+configuration.getRepository().getDatabase().getIpaddress()+
-                                 ":"+configuration.getRepository().getDatabase().getPort()+
-                                "/"+configuration.getRepository().getDatabase().getDbname();
+        String url = "jdbc:mysql://"+configuration.getRepository().getDestinationdatabase().getIpaddress()+
+                                 ":"+configuration.getRepository().getDestinationdatabase().getPort()+
+                                "/"+configuration.getRepository().getDestinationdatabase().getDbname();
         driverManagerDataSource.setUrl(url);
-        driverManagerDataSource.setUsername(configuration.getRepository().getDatabase().getUser());
-        driverManagerDataSource.setPassword(configuration.getRepository().getDatabase().getPassword());
+        driverManagerDataSource.setUsername(configuration.getRepository().getDestinationdatabase().getUser());
+        driverManagerDataSource.setPassword(configuration.getRepository().getDestinationdatabase().getPassword());    
         return driverManagerDataSource;
     }
     
-    @Bean
-    @Primary
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory()
+    @Bean(name = "secondaryEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean secondaryEntityManagerFactory()
     {
         LocalContainerEntityManagerFactoryBean entityManagerFactory = 
                 new LocalContainerEntityManagerFactoryBean();
         
-        entityManagerFactory.setDataSource(dataSource());
+        entityManagerFactory.setDataSource(secondaryDataSource());
         HibernateJpaVendorAdapter vendorAdapter=new HibernateJpaVendorAdapter();
         entityManagerFactory.setJpaVendorAdapter(vendorAdapter);
         
@@ -77,25 +63,17 @@ public class DatabaseConfiguration
         return entityManagerFactory;
     }
     
-    @Bean
-    @Primary
+    @Bean(name = "secondaryTransactionManager")
     public JpaTransactionManager transactionManager()
     {
         JpaTransactionManager transactionManager=new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
+        transactionManager.setEntityManagerFactory(secondaryEntityManagerFactory().getObject());
         return transactionManager;
     }
     
-    @Bean
-    @Primary
+    /*@Bean
     public PersistenceExceptionTranslationPostProcessor exceptionTranslation()
     {
         return new PersistenceExceptionTranslationPostProcessor();
-    }
-    
-    @Bean
-    public BackgroundTransmitionJob backgroundTransmitionJob()
-    {
-        return new BackgroundTransmitionJob();
-    }
+    } */
 }

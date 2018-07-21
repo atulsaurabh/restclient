@@ -18,6 +18,8 @@ public class Repository {
     
     @JacksonXmlProperty
     private Database database;
+    @JacksonXmlProperty(localName = "destination")
+    private Database destinationdatabase;
     
     
     public Database getDatabase() {
@@ -26,6 +28,14 @@ public class Repository {
 
     public void setDatabase(Database database) {
         this.database = database;
+    }
+
+    public Database getDestinationdatabase() {
+        return destinationdatabase;
+    }
+
+    public void setDestinationdatabase(Database destinationdatabase) {
+        this.destinationdatabase = destinationdatabase;
     }
     
     

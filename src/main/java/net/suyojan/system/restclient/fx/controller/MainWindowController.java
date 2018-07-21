@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package net.suyojan.system.restclient.fx.controller;
 
 import javafx.event.ActionEvent;
@@ -35,7 +31,8 @@ public class MainWindowController
     @FXML
     public void initialize() 
     {
-      repoTypeComboBox.getItems().addAll(GUIInitializer.DATABASE,
+      repoTypeComboBox.getItems().addAll(GUIInitializer.DATABASE_REST,
+                                         GUIInitializer.DATABASE_DIRECT,
                                  GUIInitializer.EXCEL,
                                  GUIInitializer.XML);
     }
@@ -56,10 +53,11 @@ public class MainWindowController
         {
           switch(repositoryType)
           {
-              case GUIInitializer.DATABASE:
-                    restClientFXMLLoader.createStage(UINames.DATABASE_CONFIGURE_WINDOW, "window.databaseconfigure.title");
+              case GUIInitializer.DATABASE_REST:
+                    restClientFXMLLoader.createStage(UINames.DATABASE_REST_CONFIGURE_WINDOW, "window.databaseconfigure.title");
                   break;
-              case GUIInitializer.XML:
+              case GUIInitializer.DATABASE_DIRECT:
+                  restClientFXMLLoader.createStage(UINames.DATABASE_DIRECT_CONFIGURE_WINDOW, "window.direct.databasewindow.title");
                   break;
               case GUIInitializer.EXCEL:
                   break;

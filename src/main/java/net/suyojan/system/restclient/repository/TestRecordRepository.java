@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
  * @author Suyojan
  */
 
-@Repository
+@Repository()
 public interface TestRecordRepository extends JpaRepository<Testrecord, Long>
 {
     List<Testrecord> findTop25BySent(boolean sent);  

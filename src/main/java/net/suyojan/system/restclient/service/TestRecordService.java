@@ -18,18 +18,20 @@ import org.springframework.transaction.annotation.Transactional;
  */
 
 @Service
-@Transactional
+@Transactional("transactionManager")
 public class TestRecordService 
 {
     @Autowired
     private TestRecordRepository testRecordRepository;
 
-   @Transactional 
+    
+    
+   @Transactional("transactionManager")
     public List<Testrecord> fetchRecordNotSent() {
         return testRecordRepository.findTop25BySent(false);
     }
     
-    @Transactional
+    @Transactional("transactionManager")
     public boolean batch25Update(List<Testrecord> testrecords)
     {
         for(Testrecord ts : testrecords)
@@ -44,5 +46,6 @@ public class TestRecordService
         }
         
     }
+    
     
 }

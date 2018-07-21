@@ -37,6 +37,12 @@ public class DatabasePropertyController {
     private TextField userName;
     @FXML
     private TextField userPassword;
+    
+    @FXML
+    private TextField hostName;
+    
+    @FXML
+    private TextField portNumber;
 
     @Autowired
     private XMLReadWriteService xMLReadWriteService;
@@ -49,19 +55,25 @@ public class DatabasePropertyController {
     {
        RestConfiguration restConfiguration = xMLReadWriteService.readRestConfiguration();
        Database database = restConfiguration.getRepository().getDatabase();
+       hostName.setText(restConfiguration.getIpaddress());
+       portNumber.setText(String.valueOf(restConfiguration.getPort()));
        databaseName.setText(database.getDbname());
        ipAddress.setText(database.getIpaddress());
        port.setText(String.valueOf(database.getPort()));
        userName.setText(database.getUser());
        userPassword.setText(database.getPassword());
+       
     }
 
     @FXML
     public void changeDatabaseProperty(ActionEvent actionEvent) {
         
         RestConfiguration restConfiguration = xMLReadWriteService.readRestConfiguration();
-        restConfiguration.setMode(Modes.DATABASE_MODE);
+        restConfiguration.setMode(Modes.MODE_DATABASE_REST);
+        restConfiguration.setIpaddress(hostName.getText());
+        restConfiguration.setPort(Integer.parseInt(portNumber.getText()));
         Repository resRepository = restConfiguration.getRepository();
+        resRepository.setDestinationdatabase(null);
         Database database = new Database();
         database.setDbname(databaseName.getText());
         database.setIpaddress(ipAddress.getText());

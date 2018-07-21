@@ -11,9 +11,11 @@ package net.suyojan.system.restclient.fx;
  */
 public interface GUIInitializer 
 {
-     public static final String GUI_OPEN="gui";
+     public static final String GUI_OPEN="configure";
      public static final String GUI_HOME = "/gui/";
-     public static final String DATABASE="DATABASE";
+     public static final String DATABASE_REST="DATABASE_REST";
+     public static final String DATABASE_DIRECT="DATABASE_DIRECT";
      public static final String XML="XML";
      public static final String EXCEL="EXCEL";
+     
 }

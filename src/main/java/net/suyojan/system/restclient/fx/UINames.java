@@ -12,5 +12,6 @@ package net.suyojan.system.restclient.fx;
 public interface UINames 
 {
     public static final String MAIN_WINDOW="configuration.fxml";
-    public static final String DATABASE_CONFIGURE_WINDOW="databaseproperties.fxml";
+    public static final String DATABASE_REST_CONFIGURE_WINDOW="databaseproperties.fxml";
+    public static final String DATABASE_DIRECT_CONFIGURE_WINDOW="databasepropertiesfordirectcomm.fxml";
 }

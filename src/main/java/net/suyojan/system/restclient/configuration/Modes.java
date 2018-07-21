@@ -10,5 +10,6 @@ package net.suyojan.system.restclient.configuration;
  * @author Suyojan
  */
 public interface Modes {
-    public static final String DATABASE_MODE="DATABASE";
+    public static final String MODE_DATABASE_REST="DATABASE_REST";
+    public static final String MODE_DATABASE_DIRECT="D2D";
 }

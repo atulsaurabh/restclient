@@ -35,6 +35,7 @@ public class RestClientFXMLLoader
         try {
             return loader.load();
         } catch (IOException e) {
+            e.printStackTrace();
         }
         
         return null;
