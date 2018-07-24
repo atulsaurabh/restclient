@@ -5,13 +5,23 @@
  */
 package net.suyojan.system.restclient.background;
 
+import java.io.File;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.suyojan.system.restclient.configuration.RestConfiguration;
 import net.suyojan.system.restclient.entity.Testrecord;
+import net.suyojan.system.restclient.exception.RecoveryRetriesLimitExceedException;
+import net.suyojan.system.restclient.repository.FailedLogFileRepository;
+import net.suyojan.system.restclient.service.LogFileService;
 import net.suyojan.system.restclient.service.TestRecordService;
 import net.suyojan.system.restclient.service.XMLReadWriteService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +33,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.security.crypto.codec.Base64;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  *
@@ -44,16 +55,29 @@ public class BackgroundTransmitionJob
    
     
     /*
+      Recovery retries
+    */
+    
+    @Value("${failed.operation.recover.tries}")
+    private int retries;
+    
+    /*
        Rest end point URL fetched properties file.
     */
     @Value("${rest.endpoint.update}")
     private String batchUpdateURL;
+    
+    @Value("${rest.endpoint.query}")
+    private String retrieveURL;
     
     @Value("${current.dbName}")
     private String dbName;
     
     @Autowired
     private XMLReadWriteService xMLReadWriteService;
+    
+    @Autowired
+    private LogFileService logFileService;
     
     @Autowired
     private RestTemplate restTemplate;
@@ -76,10 +100,30 @@ public class BackgroundTransmitionJob
             This threads performs the following tasks
             1. Fetch a batch of 25 records
             2. Calling the REST end point and transmitting the batch
-            3. If server response with true then updating the flag sent=true
+            3. If server response with true then updating the flag sent=true in the batch and update it
          */
-        Runnable task = () -> {
-             List<Testrecord> testrecords=testRecordService.fetchRecordNotSent();
+        Runnable task = () -> 
+             {
+                 List<Testrecord> testrecords = null;
+                    /*
+                        Try for the recovery, if there is any failed record
+                    */
+                    
+                    try 
+                    {    
+                        doRestore(0); 
+                    } 
+                    catch (RecoveryRetriesLimitExceedException recoveryRetriesLimitExceedException) 
+                    {
+                     Logger.getLogger(getClass().getName()).log(Level.SEVERE,"Unable To Update Failed Records",recoveryRetriesLimitExceedException);
+                     executorService.shutdown();
+                     System.exit(-1);
+                     return;
+                    }
+                    
+             
+                  testrecords=testRecordService.fetchRecordNotSent();
+            
               /*
                 In each record from a batch insert the current database name.
              */
@@ -128,7 +172,10 @@ public class BackgroundTransmitionJob
                    }
                    else
                    {
-                       System.out.println("Updation done on single side");
+                       /*
+                          If the server already updated and client is not able to update
+                       */   
+                      logFileService.createAndStore(testrecords);
                    }
                    
                }
@@ -136,15 +183,150 @@ public class BackgroundTransmitionJob
                {
                    System.out.println("Not Updated");
                }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception e) 
+            {
+                logFileService.marker();
+                try {
+                    doRetrieveFromServerAndUpdate(0);
+                    logFileService.removeFailedLogFile();
+                } catch (Exception e1) 
+                {
+                    System.err.println("There may be various reasons for this behaviour");
+                    System.err.println("The Most Probable Reason is:  Network May Be DOWN");
+                    System.err.println("Kindly Restart The System After Some Times");
+                    System.err.println("System Going To Shutdown Now");
+                    executorService.shutdown();
+                    System.exit(0);
+                }
             }
              
             
         };
           executorService.scheduleAtFixedRate(task, 0, repeatition_time, TimeUnit.MINUTES);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e) 
+          {
+              e.printStackTrace();
+          }
+        
+        
+    }
+    
+    
+    private void doRestore(int again) throws RecoveryRetriesLimitExceedException
+    {
+        /*
+        Check if there is any failed record available or not
+         */
+        if (logFileService.isLogAvailable()) {
+            /*
+              Recover all failed records
+            */
+            List<Testrecord> testrecords = logFileService.recoverFailedRecord();
+            /*
+               If the logfile is empty or accedently empty
+            */
+            
+                if(testrecords.isEmpty())
+                {
+                    /*
+                        Start Communication with server to get lastly sent items
+                        and update the record.
+                    */
+                    doRetrieveFromServerAndUpdate(0);    
+                }
+                else
+                {
+                    /*
+                       Try to update it
+                     */
+                    if (testRecordService.batch25Update(testrecords)) {
+                        logFileService.removeFailedLogFile();
+                    } else {
+                        /*
+                            if updation failed Try Again
+                         */
+
+                        if (again < retries) {
+                            again++;
+                            try {
+                                Thread.sleep(1000 * 15);
+                            } catch (Exception e1) {
+                            }
+                            doRestore(again);
+                        } else {
+                            throw new RecoveryRetriesLimitExceedException(retries);
+                        }
+                    }
+                }
+            
+        }
+        else
+        {
+            /*
+            No Need to restore
+            */
+            return;
+        }
+    }
+    
+    private void doRetrieveFromServerAndUpdate(int again) throws RecoveryRetriesLimitExceedException
+    {
+        try {
+                RestConfiguration restConfiguration = xMLReadWriteService.readRestConfiguration();
+                String url = "https://" + restConfiguration.getIpaddress() + ":" + restConfiguration.getPort() + "/" + retrieveURL + "/{migratedFrom}";
+                HttpHeaders headers = new HttpHeaders();
+                String auth = "REST_CLIENT:INDIA";
+                String password = new String(Base64.encode(auth.getBytes(Charset.forName("US-ASCII"))));
+                //String password = new BCryptPasswordEncoder().encode(auth);
+                String token = "Basic " + password;
+                headers.set("Authorization", token);
+                Map<String, String> urlMap = new HashMap<>();
+                urlMap.put("migratedFrom", dbName);
+                UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(url);
+                URI postURI = builder.buildAndExpand(urlMap).toUri();
+                HttpEntity entity = new HttpEntity(headers);
+                Testrecord [] testrecords_response = restTemplate.postForObject(postURI, entity,Testrecord[].class);
+                List<Testrecord> testrecords = Arrays.asList(testrecords_response);
+                
+                testrecords.stream().forEach(testrecord -> {
+                    testrecord.setId(testrecord.getOldId());
+                    testrecord.getTestresultCollection().stream().forEach(testresult -> {
+                        testresult.setId(testresult.getOldid());
+                    });
+                });
+
+                if (testRecordService.batch25Update(testrecords)) {
+                    logFileService.removeFailedLogFile();
+                } else {
+                    if (again < retries) {
+                       
+                        again++;
+                        System.out.println("Retrying ...."+again+" times");
+                        try {
+                            Thread.sleep(1000 * 15);
+                        } catch (Exception e1) {
+                        }
+                        doRetrieveFromServerAndUpdate(again);
+                    } else {
+                        throw new RecoveryRetriesLimitExceedException(retries);
+                    }
+                }    
+        } catch (Exception e) 
+        {
+            System.out.println(e.getMessage());
+            if(again < retries)
+            {
+                again++;
+                System.out.println("Retrying ...."+again+" times");
+                try {
+                Thread.sleep(1000*15);    
+                } catch (Exception e1) {
+                }
+                
+                doRetrieveFromServerAndUpdate(again);
+            }
+            else
+                throw new RecoveryRetriesLimitExceedException(retries);
         }
         
         

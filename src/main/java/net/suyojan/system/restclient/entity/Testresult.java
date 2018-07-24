@@ -23,6 +23,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import org.hibernate.annotations.LazyCollection;
@@ -63,13 +64,26 @@ public class Testresult implements Serializable {
     @LazyCollection(LazyCollectionOption.FALSE)
     @JsonIgnore
     private Collection<AppActions> appActionsCollection;
-
+    
+    @Transient
+    private Long oldid;
+    
     public Testresult() {
     }
 
     public Testresult(Long id) {
         this.id = id;
     }
+
+    public Long getOldid() {
+        return oldid;
+    }
+
+    public void setOldid(Long oldid) {
+        this.oldid = oldid;
+    }
+    
+    
 
     public Testresult(Long id, String paramName, BigDecimal paramValue) {
         this.id = id;

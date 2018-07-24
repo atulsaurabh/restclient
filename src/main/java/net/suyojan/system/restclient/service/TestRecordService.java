@@ -43,8 +43,7 @@ public class TestRecordService
         return true;    
         } catch (Exception e) {
             return false;
-        }
-        
+        }      
     }
     
     

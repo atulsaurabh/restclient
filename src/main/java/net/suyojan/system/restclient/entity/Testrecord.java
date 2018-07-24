@@ -102,12 +102,26 @@ public class Testrecord implements Serializable {
     @Transient
    private String migratedFrom;
     
+    @Transient
+    private Long oldId;
+    
     public Testrecord() {
     }
 
     public Testrecord(Long id) {
         this.id = id;
     }
+
+    public Long getOldId() {
+        return oldId;
+    }
+
+    public void setOldId(Long oldId) {
+        this.oldId = oldId;
+    }
+    
+    
+    
 
     public Testrecord(Long id, String category, String testStation, String dut, String orderCode, short reportResult, short errorCategory) {
         this.id = id;
