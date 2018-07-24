@@ -5,7 +5,6 @@
  */
 package net.suyojan.system.restclient.background;
 
-import java.io.File;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -15,15 +14,14 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.suyojan.system.restclient.configuration.RestConfiguration;
 import net.suyojan.system.restclient.entity.Testrecord;
 import net.suyojan.system.restclient.exception.RecoveryRetriesLimitExceedException;
-import net.suyojan.system.restclient.repository.FailedLogFileRepository;
 import net.suyojan.system.restclient.service.LogFileService;
 import net.suyojan.system.restclient.service.TestRecordService;
 import net.suyojan.system.restclient.service.XMLReadWriteService;
+import net.suyojan.system.restclient.util.SuyojanLogger;
+import org.apache.log4j.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -82,6 +80,12 @@ public class BackgroundTransmitionJob
     @Autowired
     private RestTemplate restTemplate;
     
+    @Autowired
+    private SuyojanLogger suyojanLogger;
+    
+    @Value("${network.fail.message}")
+    private String networkFailMessage;
+    
     /**
      * The batch of 25 records is fetched. 
      * Each batch is sent to the remote server.
@@ -111,11 +115,12 @@ public class BackgroundTransmitionJob
                     
                     try 
                     {    
+                        
                         doRestore(0); 
                     } 
                     catch (RecoveryRetriesLimitExceedException recoveryRetriesLimitExceedException) 
                     {
-                     Logger.getLogger(getClass().getName()).log(Level.SEVERE,"Unable To Update Failed Records",recoveryRetriesLimitExceedException);
+                     //Logger.getLogger(getClass().getName()).log(Level.SEVERE,"Unable To Update Failed Records",recoveryRetriesLimitExceedException);
                      executorService.shutdown();
                      System.exit(-1);
                      return;
@@ -191,10 +196,9 @@ public class BackgroundTransmitionJob
                     logFileService.removeFailedLogFile();
                 } catch (Exception e1) 
                 {
-                    System.err.println("There may be various reasons for this behaviour");
-                    System.err.println("The Most Probable Reason is:  Network May Be DOWN");
-                    System.err.println("Kindly Restart The System After Some Times");
-                    System.err.println("System Going To Shutdown Now");
+                    
+                    suyojanLogger.log(this.getClass(), Level.FATAL, networkFailMessage,e1);
+                    System.out.println("Kindly refer the "+suyojanLogger.getLogFilePath());
                     executorService.shutdown();
                     System.exit(0);
                 }
@@ -301,7 +305,7 @@ public class BackgroundTransmitionJob
                     if (again < retries) {
                        
                         again++;
-                        System.out.println("Retrying ...."+again+" times");
+                        suyojanLogger.log(this.getClass(),Level.FATAL , "Retrying ... "+again,new Throwable("Fail In Local Database Update"));
                         try {
                             Thread.sleep(1000 * 15);
                         } catch (Exception e1) {
@@ -317,7 +321,8 @@ public class BackgroundTransmitionJob
             if(again < retries)
             {
                 again++;
-                System.out.println("Retrying ...."+again+" times");
+                
+                suyojanLogger.log(this.getClass(), Level.FATAL, "Retrying ... "+again,e);
                 try {
                 Thread.sleep(1000*15);    
                 } catch (Exception e1) {

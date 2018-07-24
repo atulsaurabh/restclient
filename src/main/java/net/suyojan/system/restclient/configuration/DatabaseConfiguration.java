@@ -9,10 +9,12 @@ import java.util.Properties;
 import javax.sql.DataSource;
 import net.suyojan.system.restclient.background.BackgroundTransmitionJob;
 import net.suyojan.system.restclient.service.XMLReadWriteService;
+import net.suyojan.system.restclient.util.SuyojanLogger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Scope;
 import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -98,4 +100,13 @@ public class DatabaseConfiguration
     {
         return new BackgroundTransmitionJob();
     }
+    
+    
+    @Bean
+    @Scope("prototype")
+    public SuyojanLogger suyojanLogger()
+    {
+        return new SuyojanLogger();
+    }
+    
 }
