@@ -160,7 +160,7 @@ public class BackgroundTransmitionJob
              /*
                Prepare the REST end point URL.
              */
-             String url = "https://"+restConfiguration.getIpaddress()+":"+restConfiguration.getPort()+"/"+batchUpdateURL;
+             String url = "http://"+restConfiguration.getIpaddress()+":"+restConfiguration.getPort()+"/"+batchUpdateURL;
              try {
                  /*
                    Call the REST end point and get the boolean answer for database migration.
@@ -277,7 +277,7 @@ public class BackgroundTransmitionJob
     {
         try {
                 RestConfiguration restConfiguration = xMLReadWriteService.readRestConfiguration();
-                String url = "https://" + restConfiguration.getIpaddress() + ":" + restConfiguration.getPort() + "/" + retrieveURL + "/{migratedFrom}";
+                String url = "http://" + restConfiguration.getIpaddress() + ":" + restConfiguration.getPort() + "/" + retrieveURL + "/{migratedFrom}";
                 HttpHeaders headers = new HttpHeaders();
                 String auth = "REST_CLIENT:INDIA";
                 String password = new String(Base64.encode(auth.getBytes(Charset.forName("US-ASCII"))));

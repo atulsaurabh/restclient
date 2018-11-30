@@ -8,7 +8,7 @@ and open the template in the editor.
 
 <restconfiguration>
     <ipaddress>localhost</ipaddress>    
-    <port>8080</port>
+    <port>8084</port>
     <testingurl>welcometest</testingurl>
     <mode>database</mode>
     <repository>
