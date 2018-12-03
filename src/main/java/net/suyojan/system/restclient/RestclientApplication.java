@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import net.suyojan.system.restclient.background.BackgroundTransmitionJob;
+import net.suyojan.system.restclient.configuration.HomeConfiguration;
 import net.suyojan.system.restclient.configuration.Modes;
 import net.suyojan.system.restclient.fx.GUIInitializer;
 import net.suyojan.system.restclient.fx.UINames;
@@ -69,7 +70,17 @@ public class RestclientApplication extends Application implements ApplicationRun
     @Override
     public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
-        String[] args = getParameters().getRaw().toArray(new String[getParameters().getRaw().size()]);
+        Parameters parameters=getParameters();
+        String home = parameters.getNamed().get("insdir");
+        if (home == null)
+        {
+            throw new Exception("Home is not defined. Kindly define it using --insdir option");
+        }
+        else
+        {
+            HomeConfiguration.SUYOJAN_HOME=home;
+        }
+        String[] args = parameters.getRaw().toArray(new String[getParameters().getRaw().size()]);
         SpringApplication.run(RestclientApplication.class, args);
     }
 

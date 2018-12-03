@@ -5,6 +5,7 @@
  */
 package net.suyojan.system.restclient.service;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,6 +14,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import net.suyojan.system.restclient.configuration.HomeConfiguration;
 import net.suyojan.system.restclient.configuration.RestClientXMLConfiguration;
 import net.suyojan.system.restclient.configuration.RestConfiguration;
 import net.suyojan.system.restclient.configuration.RestPropertyConfiguration;
@@ -32,10 +35,7 @@ public class XMLReadWriteService
     {
         try {
             XmlMapper xmlMapper = new XmlMapper();
-            File file = new File(getClass().getResource(
-                    RestPropertyConfiguration.XML_HOME
-                    + RestPropertyConfiguration.REST_XML_CONFIGURATION_FILE).
-                    getPath());
+            File file = new File(HomeConfiguration.SUYOJAN_HOME+"/"+RestPropertyConfiguration.REST_XML_CONFIGURATION_FILE);
             RestConfiguration restConfiguration = xmlMapper.readValue(new FileInputStream(file), RestConfiguration.class);
             return restConfiguration;
         } catch (FileNotFoundException e) {
@@ -50,10 +50,9 @@ public class XMLReadWriteService
     {
         try {
             XmlMapper xmlMapper = new XmlMapper();
-            File file = new File(getClass().getResource(
-                    RestPropertyConfiguration.XML_HOME
-                    + RestPropertyConfiguration.REST_XML_CONFIGURATION_FILE).
-                    getPath());
+            xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+            File file = new File(HomeConfiguration.SUYOJAN_HOME+"/"+RestPropertyConfiguration.REST_XML_CONFIGURATION_FILE);
+
             xmlMapper.writeValue(new FileOutputStream(file), restConfiguration);
             return true;
         } catch (IOException e) {

@@ -44,6 +44,12 @@ public class DatabasePropertyController {
     @FXML
     private TextField portNumber;
 
+    @FXML
+    private TextField clientName;
+
+    @FXML
+    private TextField repeatdelay;
+
     @Autowired
     private XMLReadWriteService xMLReadWriteService;
 
@@ -62,6 +68,8 @@ public class DatabasePropertyController {
        port.setText(String.valueOf(database.getPort()));
        userName.setText(database.getUser());
        userPassword.setText(database.getPassword());
+       clientName.setText(restConfiguration.getDbName());
+       repeatdelay.setText(String.valueOf(restConfiguration.getDelay()));
        
     }
 
@@ -72,7 +80,10 @@ public class DatabasePropertyController {
         restConfiguration.setMode(Modes.MODE_DATABASE_REST);
         restConfiguration.setIpaddress(hostName.getText());
         restConfiguration.setPort(Integer.parseInt(portNumber.getText()));
+        restConfiguration.setDelay(Long.parseLong(repeatdelay.getText()));
+        restConfiguration.setDbName(clientName.getText());
         Repository resRepository = restConfiguration.getRepository();
+
         resRepository.setDestinationdatabase(null);
         Database database = new Database();
         database.setDbname(databaseName.getText());
@@ -81,6 +92,7 @@ public class DatabasePropertyController {
         database.setUser(userName.getText());
         database.setPassword(userPassword.getText());
         resRepository.setDatabase(database);
+
         if (xMLReadWriteService.updateRestConfiguration(restConfiguration)) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setContentText(utility.getValue("window.database.alert.success.message"));

@@ -24,7 +24,13 @@ public class RestConfiguration
    private String testingurl;
   @JacksonXmlProperty(localName = "mode")
   private String mode;
+  @JacksonXmlProperty(localName = "dbName")
+  private String dbName;
+    @JacksonXmlProperty(localName = "delay")
+    private long delay;
    @JacksonXmlProperty(localName = "repository")
+
+
    private Repository repository;
 
     public String getIpaddress() {
@@ -66,7 +72,20 @@ public class RestConfiguration
     public void setMode(String mode) {
         this.mode = mode;
     }
-   
-   
-   
+
+    public String getDbName() {
+        return dbName;
+    }
+
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    public long getDelay() {
+        return delay;
+    }
+
+    public void setDelay(long delay) {
+        this.delay = delay;
+    }
 }

@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="662.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.suyojan.system.restclient.fx.controller.DatabasePropertyController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="719.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.suyojan.system.restclient.fx.controller.DatabasePropertyController">
    <children>
       <ImageView fitHeight="150.0" fitWidth="600.0" pickOnBounds="true">
          <image>
@@ -22,42 +22,42 @@
             <Font name="Berlin Sans FB" size="24.0" />
          </font>
       </Label>
-      <TextField fx:id="hostName"  layoutX="232.0" layoutY="241.0" promptText="HOST NAME" />
+      <TextField fx:id="hostName" layoutX="232.0" layoutY="241.0" promptText="HOST NAME" />
       <Label layoutX="431.0" layoutY="246.0" text=":" />
       <TextField fx:id="portNumber" alignment="CENTER" layoutX="447.0" layoutY="241.0" prefHeight="31.0" prefWidth="67.0" promptText="PORT" />
       <Separator layoutX="18.0" layoutY="216.0" prefHeight="13.0" prefWidth="570.0" />
-      <Label layoutX="96.0" layoutY="351.0" prefHeight="41.0" prefWidth="126.0" text="Database Name">
+      <Label layoutX="96.0" layoutY="422.0" prefHeight="41.0" prefWidth="126.0" text="Database Name">
          <font>
             <Font name="System Bold" size="15.0" />
          </font>
       </Label>
-      <TextField fx:id="databaseName" layoutX="306.0" layoutY="356.0" promptText="DATABASE NAME" />
-      <Label layoutX="96.0" layoutY="396.0" prefHeight="41.0" prefWidth="126.0" text="IP Address">
+      <TextField fx:id="databaseName" layoutX="306.0" layoutY="427.0" promptText="DATABASE NAME" />
+      <Label layoutX="96.0" layoutY="467.0" prefHeight="41.0" prefWidth="126.0" text="IP Address">
          <font>
             <Font name="System Bold" size="15.0" />
          </font></Label>
-      <TextField fx:id="ipAddress" layoutX="306.0" layoutY="401.0" promptText="IP ADRDESS" />
-      <Label layoutX="96.0" layoutY="441.0" prefHeight="41.0" prefWidth="126.0" text="Port">
+      <TextField fx:id="ipAddress" layoutX="306.0" layoutY="472.0" promptText="IP ADRDESS" />
+      <Label layoutX="96.0" layoutY="512.0" prefHeight="41.0" prefWidth="126.0" text="Port">
          <font>
             <Font name="System Bold" size="15.0" />
          </font></Label>
-      <TextField fx:id="port" layoutX="306.0" layoutY="446.0" promptText="PORT NO E.G. 3306" />
-      <Label layoutX="96.0" layoutY="490.0" prefHeight="31.0" prefWidth="126.0" text="User">
+      <TextField fx:id="port" layoutX="306.0" layoutY="517.0" promptText="PORT NO E.G. 3306" />
+      <Label layoutX="96.0" layoutY="561.0" prefHeight="31.0" prefWidth="126.0" text="User">
          <font>
             <Font name="System Bold" size="15.0" />
          </font></Label>
-      <TextField fx:id="userName" layoutX="306.0" layoutY="490.0" promptText="USER NAME" />
-      <Label layoutX="96.0" layoutY="533.0" prefHeight="31.0" prefWidth="126.0" text="Password">
+      <TextField fx:id="userName" layoutX="306.0" layoutY="561.0" promptText="USER NAME" />
+      <Label layoutX="96.0" layoutY="604.0" prefHeight="31.0" prefWidth="126.0" text="Password">
          <font>
             <Font name="System Bold" size="15.0" />
          </font></Label>
-      <PasswordField fx:id="userPassword" layoutX="306.0" layoutY="533.0" promptText="Password" />   
-      <Button alignment="CENTER" contentDisplay="CENTER" layoutX="177.0" layoutY="594.0" mnemonicParsing="false" onAction="#changeDatabaseProperty" prefHeight="31.0" prefWidth="214.0" text="Change Properties">
+      <PasswordField fx:id="userPassword" layoutX="306.0" layoutY="604.0" promptText="Password" />   
+      <Button alignment="CENTER" contentDisplay="CENTER" layoutX="177.0" layoutY="665.0" mnemonicParsing="false" onAction="#changeDatabaseProperty" prefHeight="31.0" prefWidth="214.0" text="Change Properties">
          <font>
             <Font name="System Bold" size="15.0" />
          </font></Button>
-      <Separator layoutX="18.0" layoutY="288.0" prefHeight="13.0" prefWidth="570.0" />
-      <Label alignment="CENTER" layoutX="85.0" layoutY="307.0" prefHeight="41.0" prefWidth="401.0" text="Source Database Configuration">
+      <Separator layoutX="18.0" layoutY="359.0" prefHeight="13.0" prefWidth="570.0" />
+      <Label alignment="CENTER" layoutX="85.0" layoutY="378.0" prefHeight="41.0" prefWidth="401.0" text="Source Database Configuration">
          <font>
             <Font name="Berlin Sans FB" size="18.0" />
          </font>
@@ -65,6 +65,23 @@
       <Label layoutX="62.0" layoutY="246.0" text="Rest End Point">
          <font>
             <Font name="System Bold" size="15.0" />
+         </font>
+      </Label>
+      <Label layoutX="62.0" layoutY="290.0" prefHeight="19.0" prefWidth="125.0" text="Client Name">
+         <font>
+            <Font name="System Bold" size="15.0" />
+         </font>
+      </Label>
+      <TextField fx:id="clientName" layoutX="232.0" layoutY="287.0" prefHeight="26.0" prefWidth="284.0" promptText="CLIENT NAME" />
+      <Label layoutX="67.0" layoutY="332.0" prefHeight="16.0" prefWidth="125.0" text="Repeat Delay">
+         <font>
+            <Font name="System Bold" size="15.0" />
+         </font>
+      </Label>
+      <TextField fx:id="repeatdelay" layoutX="232.0" layoutY="329.0" promptText="DELAY" />
+      <Label layoutX="413.0" layoutY="334.0" prefHeight="16.0" prefWidth="102.0" text="In Minutes">
+         <font>
+            <Font name="System Bold" size="13.0" />
          </font>
       </Label>
       

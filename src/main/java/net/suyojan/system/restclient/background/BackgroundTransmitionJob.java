@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
 import net.suyojan.system.restclient.configuration.RestConfiguration;
 import net.suyojan.system.restclient.entity.Testrecord;
 import net.suyojan.system.restclient.exception.RecoveryRetriesLimitExceedException;
@@ -43,6 +45,7 @@ public class BackgroundTransmitionJob
 {
     @Autowired
     private TestRecordService testRecordService;
+
     
     /*
        Time of repeatition fetched from  properties file.
@@ -116,7 +119,7 @@ public class BackgroundTransmitionJob
                     try 
                     {    
                         
-                        doRestore(0); 
+                        doRetries(0);
                     } 
                     catch (RecoveryRetriesLimitExceedException recoveryRetriesLimitExceedException) 
                     {
@@ -125,88 +128,9 @@ public class BackgroundTransmitionJob
                      System.exit(-1);
                      return;
                     }
-                    
-             
-                  testrecords=testRecordService.fetchRecordNotSent();
-            
-              /*
-                In each record from a batch insert the current database name.
-             */
-             testrecords.forEach(testrecord -> {
-               testrecord.setMigratedFrom(dbName);
-             });
-             
-             /*
-                Use the RestTemplate to call REST END point.
-             */
-             restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-             /*
-                 Prepare the http header as the transporting protocol is HTTPS 
-              */
-             HttpHeaders headers=new HttpHeaders();
-             /*
-                The batch will be sent in JSON format. 
-                So the content-type header is set as application/json
-             */
-             headers.setContentType(MediaType.APPLICATION_JSON);
-             String auth = "REST_CLIENT:INDIA";
-             String password=new String(Base64.encode(auth.getBytes(Charset.forName("US-ASCII"))));
-            //String password = new BCryptPasswordEncoder().encode(auth);
-             String token = "Basic "+password;
-              headers.set("Authorization",token);
-             HttpEntity<List<Testrecord>> entity = new HttpEntity<>(testrecords,headers);
-            
-             RestConfiguration restConfiguration=xMLReadWriteService.readRestConfiguration();
-             /*
-               Prepare the REST end point URL.
-             */
-             String url = "http://"+restConfiguration.getIpaddress()+":"+restConfiguration.getPort()+"/"+batchUpdateURL;
-             try {
-                 /*
-                   Call the REST end point and get the boolean answer for database migration.
-                 */
-                Boolean answer = restTemplate.postForObject(url, entity, Boolean.class);
-               if(answer)
-               {
-                   /*
-                      if the updation on server is successfull then update the sent=true 
-                    */
-                   if(testRecordService.batch25Update(testrecords))
-                   {
-                       System.out.println("Updation done on both side");
-                   }
-                   else
-                   {
-                       /*
-                          If the server already updated and client is not able to update
-                       */   
-                      logFileService.createAndStore(testrecords);
-                   }
-                   
-               }
-               else
-               {
-                   System.out.println("Not Updated");
-               }
-            } catch (Exception e) 
-            {
-                logFileService.marker();
-                try {
-                    doRetrieveFromServerAndUpdate(0);
-                    logFileService.removeFailedLogFile();
-                } catch (Exception e1) 
-                {
-                    
-                    suyojanLogger.log(this.getClass(), Level.FATAL, networkFailMessage,e1);
-                    System.out.println("Kindly refer the "+suyojanLogger.getLogFilePath());
-                    executorService.shutdown();
-                    System.exit(0);
-                }
-            }
-             
             
         };
-          executorService.scheduleAtFixedRate(task, 0, repeatition_time, TimeUnit.MINUTES);
+          executorService.scheduleAtFixedRate(task, 0, xMLReadWriteService.readRestConfiguration().getDelay(), TimeUnit.MINUTES);
         } catch (Exception e) 
           {
               e.printStackTrace();
@@ -214,126 +138,114 @@ public class BackgroundTransmitionJob
         
         
     }
-    
-    
-    private void doRestore(int again) throws RecoveryRetriesLimitExceedException
+
+
+    private boolean doRetries(int again) throws RecoveryRetriesLimitExceedException
     {
-        /*
-        Check if there is any failed record available or not
-         */
-        if (logFileService.isLogAvailable()) {
-            /*
-              Recover all failed records
-            */
-            List<Testrecord> testrecords = logFileService.recoverFailedRecord();
-            /*
-               If the logfile is empty or accedently empty
-            */
-            
-                if(testrecords.isEmpty())
-                {
-                    /*
-                        Start Communication with server to get lastly sent items
-                        and update the record.
+        Logger.getGlobal().log(java.util.logging.Level.INFO,"Retrying "+again+" times");
+        List <Testrecord> testrecords=testRecordService.fetchRecordNotSent();
+
+              /*
+                In each record from a batch insert the current database name.
+             */
+        testrecords.forEach(testrecord -> {
+            testrecord.setMigratedFrom(xMLReadWriteService.readRestConfiguration().getDbName());
+        });
+
+             /*
+                Use the RestTemplate to call REST END point.
+             */
+        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+             /*
+                 Prepare the http header as the transporting protocol is HTTPS
+              */
+        HttpHeaders headers=new HttpHeaders();
+             /*
+                The batch will be sent in JSON format.
+                So the content-type header is set as application/json
+             */
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        String auth = "REST_CLIENT:INDIA";
+        String password=new String(Base64.encode(auth.getBytes(Charset.forName("US-ASCII"))));
+        //String password = new BCryptPasswordEncoder().encode(auth);
+        String token = "Basic "+password;
+        headers.set("Authorization",token);
+        HttpEntity<List<Testrecord>> entity = new HttpEntity<>(testrecords,headers);
+
+        RestConfiguration restConfiguration=xMLReadWriteService.readRestConfiguration();
+             /*
+               Prepare the REST end point URL.
+             */
+        String url = "http://"+restConfiguration.getIpaddress()+":"+restConfiguration.getPort()+"/"+batchUpdateURL;
+        try {
+                 /*
+                   Call the REST end point and get the boolean answer for database migration.
+                 */
+            Boolean answer = restTemplate.postForObject(url, entity, Boolean.class);
+            if(answer)
+            {
+                   /*
+                      if the updation on server is successfull then update the sent=true
                     */
-                    doRetrieveFromServerAndUpdate(0);    
+                if(testRecordService.batch25Update(testrecords))
+                {
+                    Logger.getGlobal().log(java.util.logging.Level.INFO,"Updation done on both side");
+                    return true;
                 }
                 else
                 {
-                    /*
-                       Try to update it
-                     */
-                    if (testRecordService.batch25Update(testrecords)) {
-                        logFileService.removeFailedLogFile();
-                    } else {
-                        /*
-                            if updation failed Try Again
-                         */
-
-                        if (again < retries) {
-                            again++;
-                            try {
-                                Thread.sleep(1000 * 15);
-                            } catch (Exception e1) {
-                            }
-                            doRestore(again);
-                        } else {
-                            throw new RecoveryRetriesLimitExceedException(retries);
-                        }
-                    }
-                }
-            
-        }
-        else
-        {
-            /*
-            No Need to restore
-            */
-            return;
-        }
-    }
-    
-    private void doRetrieveFromServerAndUpdate(int again) throws RecoveryRetriesLimitExceedException
-    {
-        try {
-                RestConfiguration restConfiguration = xMLReadWriteService.readRestConfiguration();
-                String url = "http://" + restConfiguration.getIpaddress() + ":" + restConfiguration.getPort() + "/" + retrieveURL + "/{migratedFrom}";
-                HttpHeaders headers = new HttpHeaders();
-                String auth = "REST_CLIENT:INDIA";
-                String password = new String(Base64.encode(auth.getBytes(Charset.forName("US-ASCII"))));
-                //String password = new BCryptPasswordEncoder().encode(auth);
-                String token = "Basic " + password;
-                headers.set("Authorization", token);
-                Map<String, String> urlMap = new HashMap<>();
-                urlMap.put("migratedFrom", dbName);
-                UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(url);
-                URI postURI = builder.buildAndExpand(urlMap).toUri();
-                HttpEntity entity = new HttpEntity(headers);
-                Testrecord [] testrecords_response = restTemplate.postForObject(postURI, entity,Testrecord[].class);
-                List<Testrecord> testrecords = Arrays.asList(testrecords_response);
-                
-                testrecords.stream().forEach(testrecord -> {
-                    testrecord.setId(testrecord.getOldId());
-                    testrecord.getTestresultCollection().stream().forEach(testresult -> {
-                        testresult.setId(testresult.getOldid());
-                    });
-                });
-
-                if (testRecordService.batch25Update(testrecords)) {
-                    logFileService.removeFailedLogFile();
-                } else {
+                       /*
+                          If the server already updated and client is not able to update
+                       */
                     if (again < retries) {
-                       
-                        again++;
-                        suyojanLogger.log(this.getClass(),Level.FATAL , "Retrying ... "+again,new Throwable("Fail In Local Database Update"));
                         try {
-                            Thread.sleep(1000 * 15);
-                        } catch (Exception e1) {
+                            Thread.sleep(5000);
                         }
-                        doRetrieveFromServerAndUpdate(again);
-                    } else {
-                        throw new RecoveryRetriesLimitExceedException(retries);
+                        catch (InterruptedException ie)
+                        {
+                            ie.printStackTrace();
+                        }
+                        again++;
+
+                        return doRetries(again);
                     }
-                }    
-        } catch (Exception e) 
-        {
-            System.out.println(e.getMessage());
-            if(again < retries)
-            {
-                again++;
-                
-                suyojanLogger.log(this.getClass(), Level.FATAL, "Retrying ... "+again,e);
-                try {
-                Thread.sleep(1000*15);    
-                } catch (Exception e1) {
+                    else
+                        throw new RecoveryRetriesLimitExceedException(again);
                 }
-                
-                doRetrieveFromServerAndUpdate(again);
+
             }
             else
-                throw new RecoveryRetriesLimitExceedException(retries);
+            {
+                if (again < retries) {
+                    try {
+                        Thread.sleep(5000);
+                    }
+                    catch (InterruptedException ie)
+                    {
+                        ie.printStackTrace();
+                    }
+                    again++;
+                    return doRetries(again);
+                }
+                else
+                    throw new RecoveryRetriesLimitExceedException(again);
+            }
+        } catch (Exception e)
+        {
+            if (again < retries) {
+                try {
+                    Thread.sleep(5000);
+                }
+                catch (InterruptedException ie)
+                {
+                    ie.printStackTrace();
+                }
+                again++;
+                return doRetries(again);
+            }
+            else
+                throw new RecoveryRetriesLimitExceedException(again);
         }
-        
-        
     }
+
 }
